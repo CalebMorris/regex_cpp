@@ -188,114 +188,116 @@ string Regex::regex_expand( string patern ) {
 	string result = patern;
 	string element;
 	int a, b;
-	if( find(result.begin(), result.end(), '[') != result.end() ) {
-		do {
-			beg = find(result.begin(), result.end(), '[');
-			end = find(result.begin(), result.end(), ']');
-			if( beg == end ) break;
-			if( end < beg ) {
+	
+	beg = find(result.begin(), result.end(), '[');
+	end = find(result.begin(), result.end(), ']');
+	while( beg != result.end() ) {
+		if( beg == end ) break;
+		if( end < beg ) {
+			return "";
+		}
+		ranger = find(beg,end,'-');
+		if( ranger != end ) {
+			// Range
+			int lower = *(ranger-1);
+			int upper = *(ranger+1);
+			if( lower > upper ) {
 				return "";
 			}
-			ranger = find(beg,end,'-');
-			if( ranger != end ) {
-				// Range
-				int lower = *(ranger-1);
-				int upper = *(ranger+1);
-				if( lower > upper ) {
-					return "";
-				}
-				replacement_string = "";
-				for (int i = lower; i < upper; ++i) {
-					replacement_string.push_back((char)i);
-				}
-				result.replace(ranger-1,ranger+1,replacement_string);
+			replacement_string = "";
+			for (int i = lower; i < upper; ++i) {
+				replacement_string.push_back((char)i);
 			}
-			else {
-				replacement_string = "(";
-				for ( string::iterator i = beg+1; 
-					  i != (end-1); ++i) {
-					replacement_string.push_back(*i);
-					replacement_string.push_back('|');
-				}
-				replacement_string.push_back(*(end-1));
-				replacement_string.push_back(')');
-				result.replace(beg,end+1,replacement_string);
-				//std::cout << "result:" << result << std::endl;
-				//std::cout << "replace:" << replacement_string << std::endl;
-				//std::cout << "beg:" << *beg << std::endl;
-				//std::cout << "end:" << *end << std::endl;
+			result.replace(ranger-1,ranger+1,replacement_string);
+		}
+		else {
+			replacement_string = "(";
+			for ( string::iterator i = beg+1; 
+				  i != (end-1); ++i) {
+				replacement_string.push_back(*i);
+				replacement_string.push_back('|');
 			}
-		} while( beg != result.end() );
-	}
-	if( find(result.begin(), result.end(), '{') != result.end() ) {
-		do {
-			beg = find(result.begin(), result.end(), '{');
-			end = find(result.begin(), result.end(), '}');
-			if( beg == end ) break;
-			if( end < beg || beg == result.begin() ) {
-				return "";
-			}
-			ranger = find( beg, end, ',' );
-			//TODO
-			if( *(beg-1) == ')' ) {
-				//element = 
-			}
-			else {
-				element = *(beg-1);
-			}
-			//TODO parse the integers
-			if( ranger != end ) {
-				//{a,b}
-				//std::cout << string(beg+1,ranger) << std::endl;
-				//std::cout << string(ranger+1,end) << std::endl;
-				std::istringstream sa(string(beg+1,ranger));
-				std::istringstream sb(string(ranger+1,end));
-				sa >> a;
-				sb >> b;
-				if( a<0 || b<a ) {
-					return "";
-				}
-				replacement_string = "(";
-				if( *(ranger+1) == '}' ) {
-					//{a,}
-					for (int j = 0; j < a; ++j) {
-						replacement_string.append(element);
-					}
-					replacement_string.push_back('+');
-				}
-				else {
-					for (int i = a; i < b; ++i) {
-						for (int j = 0; j < i; ++j) {
-							replacement_string.append(element);
-						}
-						replacement_string.push_back('|');
-					}
-					for (int j = 0; j < b; ++j) {
-						replacement_string.append(element);
-					}
-				}
-			}
-			else {
-				//std::cout << string(beg+1,end) << std::endl;
-				std::istringstream sa(string(beg+1,end));
-				sa >> a;
-				if( a<0 ) {
-					return "";
-				}
-				replacement_string = "(";
-
-				//{a}
-				for (int j = 0; j < a; ++j) {
-					replacement_string.append(element);
-				}
-			}
+			replacement_string.push_back(*(end-1));
 			replacement_string.push_back(')');
-			result.replace(beg-1,end+1,replacement_string);
+			result.replace(beg,end+1,replacement_string);
 			//std::cout << "result:" << result << std::endl;
 			//std::cout << "replace:" << replacement_string << std::endl;
 			//std::cout << "beg:" << *beg << std::endl;
 			//std::cout << "end:" << *end << std::endl;
-		} while( beg != result.end() );
+		}
+		beg = find(result.begin(), result.end(), '[');
+		end = find(result.begin(), result.end(), ']');
+	}
+
+	beg = find(result.begin(), result.end(), '{');
+	end = find(result.begin(), result.end(), '}');
+	while( beg != result.end() ) {
+		if( beg == end ) break;
+		if( end < beg || beg == result.begin() ) {
+			return "";
+		}
+		ranger = find( beg, end, ',' );
+		//TODO
+		if( *(beg-1) == ')' ) {
+			//element = 
+		}
+		else {
+			element = *(beg-1);
+		}
+		//TODO parse the integers
+		if( ranger != end ) {
+			//{a,b}
+			//std::cout << string(beg+1,ranger) << std::endl;
+			//std::cout << string(ranger+1,end) << std::endl;
+			std::istringstream sa(string(beg+1,ranger));
+			std::istringstream sb(string(ranger+1,end));
+			sa >> a;
+			sb >> b;
+			if( a<0 || b<a ) {
+				return "";
+			}
+			replacement_string = "(";
+			if( *(ranger+1) == '}' ) {
+				//{a,}
+				for (int j = 0; j < a; ++j) {
+					replacement_string.append(element);
+				}
+				replacement_string.push_back('+');
+			}
+			else {
+				for (int i = a; i < b; ++i) {
+					for (int j = 0; j < i; ++j) {
+						replacement_string.append(element);
+					}
+					replacement_string.push_back('|');
+				}
+				for (int j = 0; j < b; ++j) {
+					replacement_string.append(element);
+				}
+			}
+		}
+		else {
+			//std::cout << string(beg+1,end) << std::endl;
+			std::istringstream sa(string(beg+1,end));
+			sa >> a;
+			if( a<0 ) {
+				return "";
+			}
+			replacement_string = "(";
+
+			//{a}
+			for (int j = 0; j < a; ++j) {
+				replacement_string.append(element);
+			}
+		}
+		replacement_string.push_back(')');
+		result.replace(beg-1,end+1,replacement_string);
+		//std::cout << "result:" << result << std::endl;
+		//std::cout << "replace:" << replacement_string << std::endl;
+		//std::cout << "beg:" << *beg << std::endl;
+		//std::cout << "end:" << *end << std::endl;
+		beg = find(result.begin(), result.end(), '{');
+		end = find(result.begin(), result.end(), '}');
 	}
 	return result;
 }
