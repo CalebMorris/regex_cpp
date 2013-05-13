@@ -62,6 +62,9 @@ Regex::Regex( string patern ) {
 		Chain::patch(e1.chain, &matchstate);
 		start = e1.state;
 	}
+	}
+	else {
+		start = NULL;
 	}	
 }
 Regex::~Regex() {}
