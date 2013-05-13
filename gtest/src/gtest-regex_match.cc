@@ -196,7 +196,14 @@ TEST(RegexMatchTest, RangeJoin) {
 	ASSERT_EQ(r.match("abc"),0);
 }
 
-TEST(RegexMatchTest, Multiplier) {
+TEST(RegexMatchTest, MultiplierSingle) {
+	Regex t("e{3}");
+	ASSERT_EQ(t.match("eee"),1);
+	ASSERT_EQ(t.match("teee"),0);
+	ASSERT_EQ(t.match("eeet"),0);
+}
+
+TEST(RegexMatchTest, MultiplierDouble) {
 	Regex s("e{1,}");
 	ASSERT_EQ(s.match("e"),1);
 	ASSERT_EQ(s.match("ee"),1);
@@ -204,10 +211,9 @@ TEST(RegexMatchTest, Multiplier) {
 	ASSERT_EQ(s.match("ete"),0);
 	ASSERT_EQ(s.match(""),0);
 	ASSERT_EQ(s.match("te"),0);
-	Regex t("e{3}");
-	ASSERT_EQ(t.match("eee"),1);
-	ASSERT_EQ(t.match("teee"),0);
-	ASSERT_EQ(t.match("eeet"),0);
+}
+
+TEST(RegexMatchTest, MultiplierInf) {
 	Regex r("et{1,2}");
 	ASSERT_EQ(r.match("et"),1);
 	ASSERT_EQ(r.match("ett"),1);
