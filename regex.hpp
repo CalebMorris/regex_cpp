@@ -4,6 +4,8 @@
 #include <list>
 #include <string>
 #include <iostream>
+#include <algorithm>
+#include <sstream>
 using std::string;
 
 struct State;
@@ -21,6 +23,7 @@ class Regex {
 		bool match( string test_string );
 		//int find_first( string test_string );
 		//std::list<string> find_all( string test_string );
+		string regex_expand( string patern );
 		string regex_to_postfix( string patern ); //TODO 
 		string toString();
 	private:

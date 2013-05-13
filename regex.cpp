@@ -7,11 +7,15 @@ Regex::Regex() {
 }
 Regex::Regex( string patern ) {
 	// Change to postfix
-	string postfix = regex_to_postfix(patern);
+	string tmp = regex_expand(patern);
+	//std::cout << "tmp:" << tmp << std::endl;
+	string postfix = regex_to_postfix(tmp);
+	if( postfix != "" ) {
+	//std::cout << "post:" << postfix << std::endl;
 	std::list<Fragment> state_stack;
 	Fragment e1, e2;
 	State* s;
-	for ( std::string::iterator it = postfix.begin();
+	for ( string::iterator it = postfix.begin();
 		  it!=postfix.end(); ++it) {
 		switch(*it) {
 			default:
@@ -33,13 +37,13 @@ Regex::Regex( string patern ) {
 			case '?':
 				e1 = *(state_stack.rbegin()); state_stack.pop_back();
 				s = new State(Split, e1.state);
-				state_stack.push_back(Fragment(s, Chain::append(e1.chain, Fragment::single_list(&s->out))));
+				state_stack.push_back(Fragment(s, Chain::append(e1.chain, Fragment::single_list(&s->out1))));
 				break;
 			case '*':
 				e1 = *(state_stack.rbegin()); state_stack.pop_back();
 				s = new State(Split, e1.state);
 				Chain::patch(e1.chain, s);
-				state_stack.push_back(Fragment(s,Fragment::single_list(&s->out)));
+				state_stack.push_back(Fragment(s,Fragment::single_list(&s->out1)));
 				break;
 			case '+':
 				e1 = *(state_stack.rbegin()); state_stack.pop_back();
@@ -58,6 +62,7 @@ Regex::Regex( string patern ) {
 		Chain::patch(e1.chain, &matchstate);
 		start = e1.state;
 	}
+	}	
 }
 Regex::~Regex() {}
 
@@ -68,7 +73,7 @@ bool Regex::match( string test_string ) {
 					  t;
 	//std::cout << "test_string:" << test_string << std::endl;
 	State::addstate(&current_list, start);
-	for ( std::string::iterator i = test_string.begin(); 
+	for ( string::iterator i = test_string.begin(); 
 		  i != test_string.end(); ++i ) {
 		c = *i & 0xFF; //Mask to only allow 0-256
 		//std::cout << "match it: " << (char)c << std::endl;
@@ -102,7 +107,10 @@ string Regex::regex_to_postfix( string patern ) {
 	int chunk = 0, orchunk = 0;
 	std::list<paren_chunk> sections;
 	struct paren_chunk* p;
-	for ( std::string::iterator it = patern.begin();
+	if( patern == "" ) {
+		return "";
+	}
+	for ( string::iterator it = patern.begin();
 		  it!=patern.end(); ++it) {
 		//std::cout << *it << std::endl;
 		switch( *it ) {
@@ -120,9 +128,9 @@ string Regex::regex_to_postfix( string patern ) {
 				break;
 			case ')':
 				if(sections.empty())
-					return NULL;
+					return "";
 				if(chunk == 0) //Nothing in between parens
-					return NULL;
+					return "";
 				while(--chunk > 0)
 					result.push_back('.');
 				for(; orchunk > 0; orchunk--)
@@ -135,11 +143,17 @@ string Regex::regex_to_postfix( string patern ) {
 			case '?':
 			case '+':
 			case '*':
+				if( chunk == 0 ) {
+					return "";
+				}
 				result.push_back(*it); //std::cout << "\t" << *it << std::endl;
 				break;
 			case '|':
+				if( (it+1) == patern.end() ) {
+					return "";
+				}
 				if( chunk == 0 ) {
-					return NULL;
+					return "";
 				}
 				while(--chunk > 0) {
 					result.push_back('.');
@@ -166,13 +180,133 @@ string Regex::regex_to_postfix( string patern ) {
 	return result;
 }
 
+string Regex::regex_expand( string patern ) {
+	string::iterator beg;
+	string::iterator end;
+	string::iterator ranger;
+	string replacement_string;
+	string result = patern;
+	string element;
+	int a, b;
+	if( find(result.begin(), result.end(), '[') != result.end() ) {
+		do {
+			beg = find(result.begin(), result.end(), '[');
+			end = find(result.begin(), result.end(), ']');
+			if( beg == end ) break;
+			if( end < beg ) {
+				return "";
+			}
+			ranger = find(beg,end,'-');
+			if( ranger != end ) {
+				// Range
+				int lower = *(ranger-1);
+				int upper = *(ranger+1);
+				if( lower > upper ) {
+					return "";
+				}
+				replacement_string = "";
+				for (int i = lower; i < upper; ++i) {
+					replacement_string.push_back((char)i);
+				}
+				result.replace(ranger-1,ranger+1,replacement_string);
+			}
+			else {
+				replacement_string = "(";
+				for ( string::iterator i = beg+1; 
+					  i != (end-1); ++i) {
+					replacement_string.push_back(*i);
+					replacement_string.push_back('|');
+				}
+				replacement_string.push_back(*(end-1));
+				replacement_string.push_back(')');
+				result.replace(beg,end+1,replacement_string);
+				//std::cout << "result:" << result << std::endl;
+				//std::cout << "replace:" << replacement_string << std::endl;
+				//std::cout << "beg:" << *beg << std::endl;
+				//std::cout << "end:" << *end << std::endl;
+			}
+		} while( beg != result.end() );
+	}
+	if( find(result.begin(), result.end(), '{') != result.end() ) {
+		do {
+			beg = find(result.begin(), result.end(), '{');
+			end = find(result.begin(), result.end(), '}');
+			if( beg == end ) break;
+			if( end < beg || beg == result.begin() ) {
+				return "";
+			}
+			ranger = find( beg, end, ',' );
+			//TODO
+			if( *(beg-1) == ')' ) {
+				//element = 
+			}
+			else {
+				element = *(beg-1);
+			}
+			//TODO parse the integers
+			if( ranger != end ) {
+				//{a,b}
+				//std::cout << string(beg+1,ranger) << std::endl;
+				//std::cout << string(ranger+1,end) << std::endl;
+				std::istringstream sa(string(beg+1,ranger));
+				std::istringstream sb(string(ranger+1,end));
+				sa >> a;
+				sb >> b;
+				if( a<0 || b<a ) {
+					return "";
+				}
+				replacement_string = "(";
+				if( *(ranger+1) == '}' ) {
+					//{a,}
+					for (int j = 0; j < a; ++j) {
+						replacement_string.append(element);
+					}
+					replacement_string.push_back('+');
+				}
+				else {
+					for (int i = a; i < b; ++i) {
+						for (int j = 0; j < i; ++j) {
+							replacement_string.append(element);
+						}
+						replacement_string.push_back('|');
+					}
+					for (int j = 0; j < b; ++j) {
+						replacement_string.append(element);
+					}
+				}
+			}
+			else {
+				//std::cout << string(beg+1,end) << std::endl;
+				std::istringstream sa(string(beg+1,end));
+				sa >> a;
+				if( a<0 ) {
+					return "";
+				}
+				replacement_string = "(";
+
+				//{a}
+				for (int j = 0; j < a; ++j) {
+					replacement_string.append(element);
+				}
+			}
+			replacement_string.push_back(')');
+			result.replace(beg-1,end+1,replacement_string);
+			//std::cout << "result:" << result << std::endl;
+			//std::cout << "replace:" << replacement_string << std::endl;
+			//std::cout << "beg:" << *beg << std::endl;
+			//std::cout << "end:" << *end << std::endl;
+		} while( beg != result.end() );
+	}
+	return result;
+}
+
 string Regex::toString() {
 	return start->toString();
 }
 
 string State::toString() {
 	std::list<State*> queue;
-	std::string result = "";
+	string result = "";
 	State* current;
 	if( out1 ) {
 		queue.push_back(out);
@@ -180,7 +314,7 @@ string State::toString() {
 	}
 	else {
 		queue.push_back(this);
-	}
+	} 
 	while( !queue.empty() ) {
 		current = *(queue.begin());
 		queue.pop_front();
