@@ -249,14 +249,13 @@ string Regex::regex_expand( string patern ) {
 		}
 		//TODO parse the integers
 		if( ranger != end ) {
-			//{a,b}
 			//std::cout << string(beg+1,ranger) << std::endl;
 			//std::cout << string(ranger+1,end) << std::endl;
 			std::istringstream sa(string(beg+1,ranger));
 			std::istringstream sb(string(ranger+1,end));
 			sa >> a;
 			sb >> b;
-			if( a<0 || b<a ) {
+			if( a<0) {
 				return "";
 			}
 			replacement_string = "(";
@@ -268,6 +267,10 @@ string Regex::regex_expand( string patern ) {
 				replacement_string.push_back('+');
 			}
 			else {
+				//{a,b}
+				if( b<a ) {
+					return "";
+				}
 				for (int i = a; i < b; ++i) {
 					for (int j = 0; j < i; ++j) {
 						replacement_string.append(element);
