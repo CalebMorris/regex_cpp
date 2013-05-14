@@ -33,22 +33,8 @@ class Regex {
 union Chain {
 	Chain* next;
 	State* s;
-	static Chain* append( Chain* l1, Chain* l2 ) {
-		Chain* old1l;
-		old1l = l1;
-		while(l1->next) {
-			l1 = l1->next;
-		}
-		l1->next = l2;
-		return old1l;
-	}
-	static void patch( Chain* l, State* s ) {
-		Chain* next;
-		for (; l; l = next) {
-			next = l->next;
-			l->s = s;
-		}
-	}
+	static Chain* append( Chain* l1, Chain* l2 );
+	static void patch( Chain* l, State* s );
 };
 
 enum { Match = 256, Split = 257 };
@@ -58,48 +44,11 @@ struct State {
 	State *out;
 	State *out1;
 	int lastlist;
-	State(int val) {
-		c = val; 
-		out = NULL;
-		out1 = NULL;
-	}
-	State(int val, State* o) {
-		c = val;
-		out = o;
-		out1 = NULL;
-	}
-	State(int val, State* o, State* o1) {
-		c = val;
-		out = o;
-		out1 = o1;
-	}
-	static std::list<State*> step(int c, std::list<State*> current_list) {
-		State* s;
-		std::list<State*> next_list;
-		//std::cout << "Checking " << (char)c << std::endl;
-		for ( std::list<State*>::iterator i = current_list.begin(); 
-			  i != current_list.end(); ++i)
-		{
-			s = *i;
-			//std::cout << "comparing " << s->c << " to " << c << std::endl;
-			if( s->c == c ) {
-				addstate(&next_list, s->out);
-				//std::cout << c << " matches." <<std::endl;
-			}
-		}
-		return next_list;
-	}
-	static void addstate( std::list<State*>* list, State* s ) {
-		if( s == NULL ) {
-			return;
-		}
-		if( s->c == Split ) {
-			addstate(list, s->out);
-			addstate(list, s->out1);
-			return;
-		}
-		list->push_back(s);
-	}
+	State(int val);
+	State(int val, State* o);
+	State(int val, State* o, State* o1);
+	static std::list<State*> step(int c, std::list<State*> current_list);
+	static void addstate( std::list<State*>* list, State* s );
 	string toString();
 };
 

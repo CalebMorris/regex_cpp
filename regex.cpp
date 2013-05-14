@@ -2,9 +2,11 @@
 
 State matchstate( Match );
 
+
 Regex::Regex() {
 	
 }
+
 Regex::Regex( string patern ) {
 	// Change to postfix
 	string tmp = regex_expand(patern);
@@ -67,6 +69,7 @@ Regex::Regex( string patern ) {
 		start = NULL;
 	}	
 }
+
 Regex::~Regex() {}
 
 bool Regex::match( string test_string ) {
@@ -310,6 +313,70 @@ string Regex::regex_expand( string patern ) {
 
 string Regex::toString() {
 	return start->toString();
+}
+
+Chain* Chain::append( Chain* l1, Chain* l2 ) {
+	Chain* old1l;
+	old1l = l1;
+	while(l1->next) {
+		l1 = l1->next;
+	}
+	l1->next = l2;
+	return old1l;
+}
+void Chain::patch( Chain* l, State* s ) {
+	Chain* next;
+	for (; l; l = next) {
+		next = l->next;
+		l->s = s;
+	}
+}
+
+State::State(int val) {
+	c = val; 
+	out = NULL;
+	out1 = NULL;
+}
+
+State::State(int val, State* o) {
+	c = val;
+	out = o;
+	out1 = NULL;
+}
+
+State::State(int val, State* o, State* o1) {
+	c = val;
+	out = o;
+	out1 = o1;
+}
+
+std::list<State*> State::step(int c, std::list<State*> current_list) {
+	State* s;
+	std::list<State*> next_list;
+	//std::cout << "Checking " << (char)c << std::endl;
+	for ( std::list<State*>::iterator i = current_list.begin(); 
+		  i != current_list.end(); ++i)
+	{
+		s = *i;
+		//std::cout << "comparing " << s->c << " to " << c << std::endl;
+		if( s->c == c ) {
+			addstate(&next_list, s->out);
+			//std::cout << c << " matches." <<std::endl;
+		}
+	}
+	return next_list;
+}
+
+void State::addstate( std::list<State*>* list, State* s ) {
+	if( s == NULL ) {
+		return;
+	}
+	if( s->c == Split ) {
+		addstate(list, s->out);
+		addstate(list, s->out1);
+		return;
+	}
+	list->push_back(s);
 }
 
 string State::toString() {
