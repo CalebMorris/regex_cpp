@@ -194,7 +194,9 @@ string Regex::regex_expand( string patern ) {
 	string result = patern;
 	string element;
 	int a, b;
-	
+	if( *(result.rbegin()) == '\\' ) {
+		return "";
+	}
 	beg = find(result.begin(), result.end(), '[');
 	end = find(result.begin(), result.end(), ']');
 	while( beg != result.end() ) {
