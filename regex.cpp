@@ -1,5 +1,7 @@
 #include "regex.hpp"
 
+string metacharacters = "|*+?.";
+
 State matchstate( Match );
 
 
