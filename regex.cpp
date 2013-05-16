@@ -147,6 +147,7 @@ string Regex::regex_to_postfix( string patern ) {
 				for(; orchunk > 0; orchunk--)
 					result.push_back('|');
 				p = &*(sections.rbegin());
+				sections.pop_back();
 				orchunk = p->or_chunk;
 				chunk = p->s_chunk;
 				chunk++;
