@@ -209,7 +209,6 @@ string Regex::regex_expand( string patern ) {
 	string replacement_string;
 	string result = patern;
 	string element;
-	int element_size;
 	int a, b;
 	if( *(result.rbegin()) == '\\' ) {
 		return "";
@@ -280,22 +279,37 @@ string Regex::regex_expand( string patern ) {
 			return "";
 		}
 		ranger = find( beg, end, ',' );
-		//TODO
 		if( *(beg-1) == ')' ) {
-			//element = 
+			string::reverse_iterator rb(beg);
+			std::string::reverse_iterator i;
+			int p_count = 1;
+			//std::cout << "rb:" << *rb << std::endl;
+			//std::cout << "re:" << *re << std::endl;
+			for ( i = rb+1; i != result.rend() && p_count > 0; ++i) {
+				if( *i == ')' && *(i+1) != '\\' ) {
+					++p_count;
+				}
+				if( *i == '(' && *(i+1) != '\\' ) {
+					--p_count;
+				}
+				//std::cout << "count:" << p_count << std::endl;
+			}
+			//if( i == result.rend() ) {
+			//	return "";
+			//}
+			element = string(rb,i);
+			reverse(element.begin(), element.end());
+			//std::cout << "parenthesis element:" << element << std::endl;
 		}
 		else if( *(beg-2) == '\\' ) {
 			//Need to do a multiple of that espace, not of just the element
 			element = "";
 			element.push_back(*(beg-2));
 			element.push_back(*(beg-1));
-			element_size = 2;
 		}
 		else {
 			element = *(beg-1);
-			element_size = 1;
 		}
-		//TODO parse the integers
 		if( ranger != end ) {
 			//std::cout << string(beg+1,ranger) << std::endl;
 			//std::cout << string(ranger+1,end) << std::endl;
@@ -345,7 +359,8 @@ string Regex::regex_expand( string patern ) {
 			}
 		}
 		replacement_string.push_back(')');
-		result.replace(beg-element_size,end+1,replacement_string);
+		//std::cout << "result:" << result << std::endl;
+		result.replace(beg-element.size(),end+1,replacement_string);
 		//std::cout << "result:" << result << std::endl;
 		//std::cout << "replace:" << replacement_string << std::endl;
 		//std::cout << "beg:" << *beg << std::endl;

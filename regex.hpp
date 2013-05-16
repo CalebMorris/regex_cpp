@@ -24,7 +24,7 @@ class Regex {
 		//int find_first( string test_string );
 		//std::list<string> find_all( string test_string );
 		string regex_expand( string patern );
-		string regex_to_postfix( string patern ); //TODO 
+		string regex_to_postfix( string patern );
 		string toString();
 	private:
 		State* start;		
