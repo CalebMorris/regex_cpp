@@ -23,6 +23,9 @@ Regex::Regex( string patern ) {
 		  it!=postfix.end(); ++it) {
 		switch(*it) {
 			default:
+				if( *it == '\\') {
+					++it;
+				}
 				s = new State(*it);
 				state_stack.push_back(Fragment(s, Fragment::single_list(&s->out)));
 				break;
@@ -174,6 +177,16 @@ string Regex::regex_to_postfix( string patern ) {
 					--chunk;
 					result.push_back('.');
 				}
+				if( *it == '\\' ) {
+					++it;
+					if( it == patern.end() ) {
+						return "";
+					}
+					if( find(metacharacters.begin(),metacharacters.end(),*it) != metacharacters.end() ) {
+						//Escape a metacharacter
+						result.push_back('\\');
+					}
+				}
 				result.push_back(*it);
 				chunk++;
 				break;
@@ -195,12 +208,19 @@ string Regex::regex_expand( string patern ) {
 	string replacement_string;
 	string result = patern;
 	string element;
+	int element_size;
 	int a, b;
 	if( *(result.rbegin()) == '\\' ) {
 		return "";
 	}
 	beg = find(result.begin(), result.end(), '[');
 	end = find(result.begin(), result.end(), ']');
+	while( *(beg-1) == '\\' ) {
+		beg = find(beg+1, result.end(), '[');
+	}
+	while( *(end-1) == '\\' ) {
+		end = find(end+1, result.end(), ']');
+	}
 	while( beg != result.end() ) {
 		if( beg == end ) break;
 		if( end < beg ) {
@@ -237,10 +257,22 @@ string Regex::regex_expand( string patern ) {
 		}
 		beg = find(result.begin(), result.end(), '[');
 		end = find(result.begin(), result.end(), ']');
+		while( *(beg-1) == '\\' ) {
+			beg = find(beg+1, result.end(), '[');
+		}
+		while( *(end-1) == '\\' ) {
+			end = find(end+1, result.end(), '[');
+		}
 	}
 
 	beg = find(result.begin(), result.end(), '{');
 	end = find(result.begin(), result.end(), '}');
+	while( *(beg-1) == '\\' ) {
+		beg = find(beg+1, result.end(), '{');
+	}
+	while( *(end-1) == '\\' ) {
+		end = find(end+1, result.end(), '}');
+	}
 	while( beg != result.end() ) {
 		if( beg == end ) break;
 		if( end < beg || beg == result.begin() ) {
@@ -251,8 +283,16 @@ string Regex::regex_expand( string patern ) {
 		if( *(beg-1) == ')' ) {
 			//element = 
 		}
+		else if( *(beg-2) == '\\' ) {
+			//Need to do a multiple of that espace, not of just the element
+			element = "";
+			element.push_back(*(beg-2));
+			element.push_back(*(beg-1));
+			element_size = 2;
+		}
 		else {
 			element = *(beg-1);
+			element_size = 1;
 		}
 		//TODO parse the integers
 		if( ranger != end ) {
@@ -304,13 +344,20 @@ string Regex::regex_expand( string patern ) {
 			}
 		}
 		replacement_string.push_back(')');
-		result.replace(beg-1,end+1,replacement_string);
+		result.replace(beg-element_size,end+1,replacement_string);
 		//std::cout << "result:" << result << std::endl;
 		//std::cout << "replace:" << replacement_string << std::endl;
 		//std::cout << "beg:" << *beg << std::endl;
 		//std::cout << "end:" << *end << std::endl;
+
 		beg = find(result.begin(), result.end(), '{');
 		end = find(result.begin(), result.end(), '}');
+		while( *(beg-1) == '\\' ) {
+			beg = find(beg+1, result.end(), '{');
+		}
+		while( *(end-1) == '\\' ) {
+			end = find(end+1, result.end(), '}');
+		}
 	}
 	return result;
 }
