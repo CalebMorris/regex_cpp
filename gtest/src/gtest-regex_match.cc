@@ -197,22 +197,55 @@ TEST(RegexMatchTest, RangeJoin) {
 }
 
 TEST(RegexMatchTest, Multiplier) {
-	Regex t("e{3}");
-	ASSERT_EQ(t.match("eee"),1);
-	ASSERT_EQ(t.match("teee"),0);
-	ASSERT_EQ(t.match("eeet"),0);
-	Regex s("e{1,}");
-	ASSERT_EQ(s.match("e"),1);
-	ASSERT_EQ(s.match("ee"),1);
-	ASSERT_EQ(s.match("eee"),1);
-	ASSERT_EQ(s.match("ete"),0);
-	ASSERT_EQ(s.match(""),0);
-	ASSERT_EQ(s.match("te"),0);
-	Regex r("et{1,2}");
-	ASSERT_EQ(r.match("et"),1);
-	ASSERT_EQ(r.match("ett"),1);
-	ASSERT_EQ(r.match("ettt"),0);
-	ASSERT_EQ(r.match("ete"),0);
+	Regex* reg;
+	reg = new Regex("e{3}");
+	ASSERT_EQ(reg->match("eee"),1);
+	ASSERT_EQ(reg->match("teee"),0);
+	ASSERT_EQ(reg->match("eeet"),0);
+
+	free(reg);reg = new Regex("e{1,}");
+	ASSERT_EQ(reg->match("e"),1);
+	ASSERT_EQ(reg->match("ee"),1);
+	ASSERT_EQ(reg->match("eee"),1);
+	ASSERT_EQ(reg->match("ete"),0);
+	ASSERT_EQ(reg->match(""),0);
+	ASSERT_EQ(reg->match("te"),0);
+
+	free(reg);reg = new Regex("et{1,2}");
+	ASSERT_EQ(reg->match("et"),1);
+	ASSERT_EQ(reg->match("ett"),1);
+	ASSERT_EQ(reg->match("ettt"),0);
+	ASSERT_EQ(reg->match("ete"),0);
+
+	free(reg);reg = new Regex("(es){1,2}");
+	ASSERT_EQ(reg->match("es"),1);
+	ASSERT_EQ(reg->match("eses"),1);
+	ASSERT_EQ(reg->match("eseses"),0);
+
+	free(reg);reg = new Regex("(es*){1,2}");
+	ASSERT_EQ(reg->match("e"),1);
+	ASSERT_EQ(reg->match("ess"),1);
+	ASSERT_EQ(reg->match("esss"),1);
+	ASSERT_EQ(reg->match("ee"),1);
+	ASSERT_EQ(reg->match("ees"),1);
+	ASSERT_EQ(reg->match("eess"),1);
+	ASSERT_EQ(reg->match("ese"),1);
+	ASSERT_EQ(reg->match("esse"),1);
+	ASSERT_EQ(reg->match("essse"),1);
+	ASSERT_EQ(reg->match("eses"),1);
+	ASSERT_EQ(reg->match("esess"),1);
+	ASSERT_EQ(reg->match("esesss"),1);
+	ASSERT_EQ(reg->match("esses"),1);
+	ASSERT_EQ(reg->match("essess"),1);
+	ASSERT_EQ(reg->match("essesss"),1);
+	ASSERT_EQ(reg->match("essses"),1);
+	ASSERT_EQ(reg->match("esssess"),1);
+	ASSERT_EQ(reg->match("esssesss"),1);
+
+	free(reg);reg = new Regex("((e)(s)){1,2}");
+	ASSERT_EQ(reg->match("es"),1);
+	ASSERT_EQ(reg->match("eses"),1);
+	ASSERT_EQ(reg->match("eseses"),0);
 }
 
 TEST(RegexMatchTest, EscapeLiteral) {
@@ -252,7 +285,6 @@ TEST(RegexMatchTest, EscapeLiteral) {
 	ASSERT_EQ(reg->match("}}}{"),1);
 	ASSERT_EQ(reg->match("}}}}{"),1);
 }
-
 
 TEST(RegexMatchTest, CharSetAlpha) {
 	Regex r("[:alpha:]");
@@ -311,6 +343,7 @@ TEST(RegexMatchTest, CharSetAlpha) {
 	ASSERT_EQ(r.match("ab"),0);
 	ASSERT_EQ(r.match("abc"),0);
 }
+
 /*
 TEST(RegexMatchTest, DotMatching) {
 	Regex r(".");
