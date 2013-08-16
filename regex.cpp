@@ -2,6 +2,7 @@
 
 string metacharacters = "|*+?.";
 
+
 State matchstate( Match );
 
 
@@ -11,11 +12,12 @@ Regex::Regex() {
 
 Regex::Regex( string patern ) {
 	// Change to postfix
+	std::cout << "patern:" << patern << std::endl;
 	string tmp = regex_expand(patern);
-	//std::cout << "tmp:" << tmp << std::endl;
+	std::cout << "tmp:" << tmp << std::endl;
 	string postfix = regex_to_postfix(tmp);
+	std::cout << "post:" << postfix << std::endl;
 	if( postfix != "" ) {
-	//std::cout << "post:" << postfix << std::endl;
 	std::list<Fragment> state_stack;
 	Fragment e1, e2;
 	State* s;
@@ -63,6 +65,8 @@ Regex::Regex( string patern ) {
 	e1 = *(state_stack.rbegin()); state_stack.pop_back();
 	if ( !state_stack.empty() ) {
 		std::cout << "Too many states" << std::endl;
+		std::cout << "Stack:" << (char)(state_stack.front().state->c) <<std::endl;
+		std::cout << "Current:" << (char)(e1.state->c) <<std::endl;
 		start = NULL;
 	}
 	else {
@@ -83,6 +87,9 @@ bool Regex::match( string test_string ) {
 					  next_list,
 					  t;
 	//std::cout << "test_string:" << test_string << std::endl;
+	if( test_string == "" && start==NULL) {
+		return true;
+	}
 	State::addstate(&current_list, start);
 	for ( string::iterator i = test_string.begin(); 
 		  i != test_string.end(); ++i ) {
@@ -199,6 +206,9 @@ string Regex::regex_to_postfix( string patern ) {
 	for(; orchunk > 0; orchunk--) {
 		result.push_back('|');
 	}
+	if( !sections.empty() ) {
+		return "";
+	}
 	return result;
 }
 
@@ -212,6 +222,21 @@ string Regex::regex_expand( string patern ) {
 	int a, b;
 	if( *(result.rbegin()) == '\\' ) {
 		return "";
+	}
+	beg = find(result.begin(), result.end(), '\\');
+	while( beg != result.end() ) {
+		switch( *(beg+1) ) {
+			case 'd':
+				result.replace(beg,beg+2,"[0-9]");
+				break;
+			case 's':
+				result.replace(beg,beg+2,"[\t\r\n]");
+				break;
+			case 'w':
+				result.replace(beg,beg+2,"[a-zA-Z0-9_]");
+				break;
+		}
+		beg = find(beg+1, result.end(), '\\');
 	}
 	beg = find(result.begin(), result.end(), '[');
 	end = find(result.begin(), result.end(), ']');

@@ -3,7 +3,8 @@
 #include "regex.hpp"
 
 int main () {
-	Regex r("e{1,}");
-	std::cout << r.match("e") << std::endl;
+	Regex* reg = 0;
+	free(reg); reg = new Regex("(\\(\\)");
+	std::cout << reg->match("") << std::endl;
 	return 0;
 }
